@@ -1,5 +1,5 @@
 from vkbottle.bot import Bot, Message
-from vkbottle import Keyboard, KeyboardButtonColor, OpenLink, EMPTY_KEYBOARD, Text
+from vkbottle import Keyboard, KeyboardButtonColor, OpenLink, Text
 import psycopg2
 from config import *
 from random import choices
@@ -19,7 +19,7 @@ async def message_handler(message:Message):
     sql.execute(f'SELECT COUNT(vk_id) FROM diary WHERE vk_id={message.from_id}')
     row = sql.fetchone()
     if row[0] == 0:
-        keyboard = Keyboard(one_time=True)
+        keyboard = Keyboard()
         sql.execute(f'SELECT code FROM register WHERE user_id = {message.from_id}')
         code = sql.fetchone()
         code = code[0] if code else None
@@ -28,19 +28,25 @@ async def message_handler(message:Message):
             sql.execute(f"INSERT INTO register (code, user_id) VALUES ('{code}',{message.from_id})")
             db.commit()
 
-        keyboard.add(OpenLink(f'http://95.73.15.165/login?code={code}','Авторизация',payload={'auth':'hide'}),color=KeyboardButtonColor.NEGATIVE)
+        keyboard.add(OpenLink(f'http://77.51.100.195/login?code={code}','Авторизация',payload={'auth':'hide'}),color=KeyboardButtonColor.NEGATIVE).add(Text(f'Функционал',payload={'auth':'hide'}),color=KeyboardButtonColor.NEGATIVE)
 
-        await message.answer('Для работы с ботов авторизируйтесь через школьный портал!', keyboard=keyboard)
+        await message.answer('Для работы с ботов авторизируйтесь через школьный портал!', keyboard=keyboard.get_json())
     else:
-        keyboard = Keyboard().add(Text('Дз', payload={'event': 'homework'})).add(
-            Text('Оценки', payload={'event': 'marks'})).add(Text('Расписание', payload={'event': 'lessons'}))
-        await message.answer('Доступные действия', keyboard=keyboard)
+        keyboard = Keyboard().add(Text('Дз', payload={'event': 'homework'})).add(Text('Оценки', payload={'event': 'marks'})).add(Text('Расписание', payload={'event': 'lessons'}))
+        await message.answer('Доступные действия', keyboard=keyboard.get_json())
 
 
 @bot.on.message(payload={'auth':'hide'})
 async def hide(message:Message):
-    keyboard = Keyboard().add(Text('Дз',payload={'event':'homework'})).add(Text('Оценки',payload={'event':'marks'})).add(Text('Расписание',payload={'event':'lessons'}))
-    await message.answer('Доступные действия',keyboard=keyboard)
+    sql.execute(f"SELECT * FROM diary WHERE vk_id = {message.from_id}")
+    rows = sql.fetchone()
+    if rows:
+        await message.answer('Вы успешно авторизовались')
+        keyboard = Keyboard().add(Text('Дз',payload={'event':'homework'})).add(Text('Оценки',payload={'event':'marks'})).add(Text('Расписание',payload={'event':'lessons'}))
+        await message.answer('Доступные действия',keyboard=keyboard.get_json())
+    else:
+        await message.answer('Вы ещё не прошли авторизацию!')
+
 
 @bot.on.message(text=['дз','ДЗ','Дз'])
 @bot.on.message(payload={'event':'homework'})
