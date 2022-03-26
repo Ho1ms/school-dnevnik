@@ -45,7 +45,11 @@ class User:
         info = req.get(
             mainUrl + f'persons/{rows[0]}/groups/{rows[1]}/schedules?startDate={date}&endDate={date + datetime.timedelta(days=1)}',
             headers=self.headers).text
-        data = json.loads(info)['days'][1:]
+
+        data = json.loads(info)
+        if data.get('type')=='invalidToken':
+            return 'Ваш токен авторизации устарел, пройдите авторизацию снова!'
+        data = data['days'][1:]
         lessons = []
         Date = self.date_parse(data[0]['date'])
 

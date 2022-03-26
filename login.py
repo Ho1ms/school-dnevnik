@@ -7,7 +7,7 @@ def dir(folder:str)->str:
     return path.join(getcwd(), folder)
 
 app = flask.Flask('Login Manager', template_folder=dir('templates'), static_folder=dir('static'))
-
+vk_url = 'https://vk.com/im?sel=-205279154'
 
 import psycopg2
 from config import *
@@ -42,7 +42,7 @@ def api_handler():
     code = request.cookies.get('code')
     if code:
         res = make_response('Success', 200)
-        res.set_cookie('auth', '1')
+        res.set_cookie('auth', '1', max_age=240)
 
         token = json.loads(request.data.decode('utf-8')).get('token')
         print(code, token)
@@ -57,4 +57,6 @@ def api_handler():
 
 
 if __name__ == '__main__':
+
+    # app.run(debug=True,host="0.0.0.0", port=80,ssl_context=('certificate.crt','local.key'))
     app.run(debug=True,host="0.0.0.0", port=80)
